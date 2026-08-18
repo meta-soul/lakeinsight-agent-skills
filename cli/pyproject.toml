@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lakeinsight-cli-test"
+version = "0.1.0rc1"
+description = "LakeInsight agent skills 生命周期管理 CLI（list / info / search / install / remove / update / sync）"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "dmetasoul" },
+]
+dependencies = [
+    "typer>=0.12",
+    "PyYAML>=6.0",
+    "rich>=13.0",
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/meta-soul/lakeinsight-agent-skills"
+Repository = "https://github.com/meta-soul/lakeinsight-agent-skills"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+lakeinsight = "lakeinsight.cli:app"
+
+[tool.setuptools]
+packages = ["lakeinsight", "lakeinsight.source"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,77 @@
+manifest_version: 1
+skills:
+  bi-task:
+    version: 1.0.0
+    description: 生成数据看板、数据报表、数据大屏、可视化图表、BI面板时使用。 当用户需要查询数据并生成可视化图表或数据看板时触发。关键字可以是数据看板,
+      数据报表, 数据大屏, 可视化, 图表, dashboard, BI, 面板, 数据面板,数据报表，可视化报表，可视化面板，数据看板，bi看板， 生成报表,
+      看板文件, 数据展示, lakesoul，BI报表
+    keywords:
+    - 数据看板
+    - 数据报表
+    - 数据大屏
+    - 可视化
+    - 图表
+    - dashboard
+    - BI
+    - 面板
+    mcp_required:
+    - lakeinsight-mcp
+  create-task:
+    version: 1.0.0
+    description: '创建或更新 LakeInsight 数据开发任务，支持 Flink 流任务、Spark 批任务、Python 脚本三种引擎。
+
+      覆盖任务创建、配置更新、版本管理全流程。
+
+      当用户说"创建任务"、"新建 Flink 任务"、"写个 Spark 批处理"、"跑 Python 脚本"、
+
+      "更新任务"、"修改任务配置"、"发布新版本"时触发。
+
+      Keywords: Flink, Spark, Python, 任务, submit_approval, dataDev, 流任务, 批任务, sql_engine'
+    keywords:
+    - Flink
+    - Spark
+    - Python
+    - 任务
+    - submit_approval
+    - dataDev
+    - 流任务
+    - 批任务
+    - sql_engine
+    mcp_required:
+    - lakeinsight-mcp
+  jar-task:
+    version: 1.0.0
+    description: '创建 Flink/Spark 程序包任务（JAR 任务），基于已上传的程序包快速配置和创建任务。
+
+      Keywords: JAR任务, 程序包任务, Flink JAR, Spark JAR, create jar task, 创建JAR任务'
+    keywords:
+    - JAR任务
+    - 程序包任务
+    - Flink JAR
+    - Spark JAR
+    - create jar task
+    - 创建JAR任务
+    mcp_required:
+    - lakeinsight-mcp
+  upload-package:
+    version: 1.0.0
+    description: '上传程序包文件到 LakeInsight 平台，支持 Python 环境包、JAR 包等类型。
+
+      上传完成后自动注册包元数据，供数据开发任务通过 archives_package 字段引用。
+
+      当用户说"上传包"、"上传文件"、"上传 Python 环境"、"上传 JAR"、
+
+      "传程序包"、"添加依赖包"、"上传依赖"时触发。
+
+      Keywords: upload, package, 上传, 程序包, Python包, JAR, 依赖, archives_package'
+    keywords:
+    - upload
+    - package
+    - 上传
+    - 程序包
+    - Python包
+    - JAR
+    - 依赖
+    - archives_package
+    mcp_required:
+    - lakeinsight-mcp
