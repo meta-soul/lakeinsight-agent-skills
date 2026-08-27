@@ -14,7 +14,7 @@ keywords:
 mcp_required:
   - lakeinsight-mcp
 description: |
-  创建或更新 LakeInsight 数据开发任务，支持 Flink 流任务、Spark 批任务、Python 脚本三种引擎。
+  创建或更新 LakeInsight 数据开发任务，支持 Flink、Spark 和 Python 三种引擎。
   覆盖任务创建、配置更新、版本管理全流程。
   当用户说"创建任务"、"新建 Flink 任务"、"写个 Spark 批处理"、"跑 Python 脚本"、
   "更新任务"、"修改任务配置"、"发布新版本"时触发。
@@ -22,6 +22,8 @@ description: |
 ---
 
 # LakeInsight 数据开发任务
+
+LakeSoul Daft 读写规则读取 `daft-lakesoul` skill。RayJob 的配置与排障规则读取 `ray-job` skill；当前 MCP `submit_approval` 尚未支持 `sql_engine: 3`，不能用它提交 RayJob。
 
 ## 引擎选择
 
