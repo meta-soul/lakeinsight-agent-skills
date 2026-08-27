@@ -1,16 +1,5 @@
 ---
 name: ray-job
-version: 1.0.0
-keywords:
-  - Ray
-  - RayJob
-  - KubeRay
-  - runtime_env
-  - runtimeEnvYAML
-  - 多文件 Python
-  - Ray 自动扩缩容
-  - Ray 任务
-  - Daft Ray
 description: |
   在 LakeInsight 配置和排查 KubeRay RayJob 时使用。
   覆盖 sql_engine=3、单文件与多文件 runtime_env 包、RayJob 原生配置、worker 自动扩缩容、Daft Ray runner 与常见部署故障。
@@ -34,8 +23,10 @@ RayJob 只能在 Kubernetes 计算引擎且后端能力接口返回可用时创�
 LakeInsight Ray 数据开发任务使用 `sql_engine: 3`，固定为批任务。主脚本内容来自 `sql_info.sql_details`，平台会生成入口文件：
 
 ```text
-<normalized-job-name>.py
+<任务名称>.py
 ```
+
+定时调度实例会在任务名称后追加实例 ID 和 `-batch`。
 
 再把它和可选 runtime_env 包合并为一个 ZIP，上传对象存储，并作为 Ray `runtimeEnvYAML.working_dir`。不要在用户 YAML 中设置 `working_dir`，平台会拒绝覆盖。
 
@@ -55,7 +46,7 @@ runtime_env 包必须是 `.zip`。在 LakeInsight UI 上传时选择 Ray runtime
 
 `ray_runtime_env_config` 是 YAML。`excludes` 使用 gitwildmatch 模式并在重新打包前应用，不能排除平台入口文件；其余字段进入 Ray `runtimeEnvYAML`。
 
-多 Python 文件任务不要把入口脚本重复放进 runtime_env ZIP：任务编辑器中的 `sql_details` 是入口，ZIP 只放入口导入的包和资源。需要生成或检查这种包时，读取[多文件 runtime_env 示例](references/multifile-runtime-env.md)，并优先复用其中的完整样例文件。
+多 Python 文件任务实际执行的代码来自任务编辑器中的 `sql_details`。用户本地项目可以包含 `entrypoint.py`，但新建任务时前端默认用所选文件名生成任务名称，后端又用任务名称生成运行入口；因此默认不要把 `entrypoint.py` 压入 runtime_env ZIP，只压入口依赖的模块和资源。需要生成或检查这种包时，读取[多文件 runtime_env 示例](references/multifile-runtime-env.md)，并优先复用其中的完整样例文件。
 
 若 `ray_runtime_env_config` 使用 `pip` 或 `uv` 安装额外依赖，Head 和 Worker 必须能访问对应包索引；完全隔离网络时使用预装依赖的 runtime 镜像。具体 YAML 见多文件示例。
 

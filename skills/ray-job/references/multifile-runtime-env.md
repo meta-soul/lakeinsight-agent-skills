@@ -2,36 +2,39 @@
 
 本例验证 LakeInsight 将任务入口与用户上传的 Python 包合并后，KubeRay 能从多个模块读取 LakeSoul 数据。
 
-任务编辑器中的 `sql_details` 是入口，上传 ZIP 只提供入口导入的模块。平台会将二者合并为 Ray working_dir，因此 ZIP 中不要包含 `<normalized-job-name>.py`；同名文件会导致合并失败。
+任务编辑器中的 `sql_details` 是实际执行代码。新建任务时，VS Code 前端默认去掉所选文件的 `.py` 后缀，并把结果作为任务名称；后端再把任务内容保存为 `<任务名称>.py`。因此选择 `entrypoint.py` 时，默认任务名称是 `entrypoint`，后端生成的运行入口也是 `entrypoint.py`。
+
+如果上传 ZIP 里同时包含根目录 `entrypoint.py`，后端合并时会发现同名文件并拒绝提交。最稳妥的做法是：本地项目保留 `entrypoint.py`，但 runtime_env ZIP 只包含它导入的模块和资源。
 
 ## 可复用样例
 
-完整文件位于 [`../assets/multifile-runtime-env/`](../assets/multifile-runtime-env/)：
+用户在工作目录中创建一个项目目录即可；推荐的本地组织方式与下方一致：
 
 ```text
-multifile-runtime-env/
-|-- task_entry.py                 粘贴到 LakeInsight 任务内容，不放进 ZIP
-`-- runtime-package/              只压缩这个目录中的内容
-    |-- app/
-    |   |-- __init__.py
-    |   |-- config.py
-    |   `-- reader.py
-    `-- utils/
-        |-- __init__.py
-        `-- output.py
+ray-runtime-multifile/
+|-- entrypoint.py                 在 Task content 中选择；不放入默认 ZIP
+|-- app/
+|   |-- __init__.py
+|   |-- config.py
+|   `-- reader.py
+`-- utils/
+    |-- __init__.py
+    `-- output.py
 ```
 
-`task_entry.py` 使用 `parse_known_args()`，因此 LakeInsight 调度参数不会让 `argparse` 因未知参数直接退出。它连接平台创建的 Ray 集群，启用 Daft Ray runner，再调用 ZIP 中的模块。
+完整示例文件位于 [`../assets/ray-runtime-multifile/`](../assets/ray-runtime-multifile/)，目录和文件名与用户本地项目一致。
+
+`entrypoint.py` 使用 `parse_known_args()`，因此 LakeInsight 调度参数不会让 `argparse` 因未知参数直接退出。它连接平台创建的 Ray 集群，启用 Daft Ray runner，再调用 ZIP 中的模块。
 
 ## 打包
 
-进入 `runtime-package` 后压缩其内容，使 `app/` 和 `utils/` 位于 ZIP 根目录：
+进入项目目录，只压缩 `app/` 和 `utils/`：
 
 ```bash
-cd skills/ray-job/assets/multifile-runtime-env/runtime-package
-zip -r ../ray-runtime-multifile.zip app utils \
+cd ray-runtime-multifile
+zip -r ray-runtime-multifile.zip app utils \
   -x '*/__pycache__/*' '*.pyc'
-unzip -l ../ray-runtime-multifile.zip
+unzip -l ray-runtime-multifile.zip
 ```
 
 正确的 ZIP 根目录应是：
@@ -44,12 +47,12 @@ utils/__init__.py
 utils/output.py
 ```
 
-不要在父目录执行 `zip -r ray-runtime-multifile.zip runtime-package`，否则会额外带一层目录。当前平台能够自动展开唯一的顶层目录，但直接使用正确根布局更容易检查，也不依赖该兼容行为。
+后端确实支持 ZIP 只有一个顶层目录时自动展开这一层，但直接从父目录压缩整个 `ray-runtime-multifile/` 会把 `entrypoint.py` 一起带进去；在前端默认任务名称下仍会发生同名冲突。如果确实要上传整个目录，必须先把任务名称改成与 `entrypoint` 不同的值，并确认重新选择 Task content 时没有再次覆盖任务名称。
 
 ## 创建任务
 
 1. 把 `ray-runtime-multifile.zip` 上传为 Ray runtime-env 包。
-2. 新建 `sql_engine: 3` 的批任务，把 `task_entry.py` 内容作为任务内容。
+2. 新建 `sql_engine: 3` 的批任务，把 `entrypoint.py` 内容作为任务内容。
 3. 将上传结果的真实 ID 写入 `runtime_env_package.id`。
 4. 可在任务参数中填写：
 
