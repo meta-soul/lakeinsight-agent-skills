@@ -5,6 +5,8 @@ keywords:
   - Flink
   - Spark
   - Python
+  - Ray
+  - RayJob
   - 任务
   - submit_approval
   - dataDev
@@ -13,17 +15,19 @@ keywords:
   - sql_engine
 mcp_required:
   - lakeinsight-mcp
+dependencies:
+  ray-job: ">=1.0.0"
 description: |
-  创建或更新 LakeInsight 数据开发任务，支持 Flink、Spark 和 Python 三种引擎。
+  创建或更新 LakeInsight 数据开发任务，支持 Flink、Spark、Python 和 Ray 四种引擎。
   覆盖任务创建、配置更新、版本管理全流程。
-  当用户说"创建任务"、"新建 Flink 任务"、"写个 Spark 批处理"、"跑 Python 脚本"、
+  当用户说"创建任务"、"新建 Flink 任务"、"写个 Spark 批处理"、"跑 Python 脚本"、"创建 RayJob"、
   "更新任务"、"修改任务配置"、"发布新版本"时触发。
-  Keywords: Flink, Spark, Python, 任务, submit_approval, dataDev, 流任务, 批任务, sql_engine
+  Keywords: Flink, Spark, Python, Ray, RayJob, 任务, submit_approval, dataDev, 流任务, 批任务, sql_engine
 ---
 
 # LakeInsight 数据开发任务
 
-LakeSoul Daft 读写规则读取 `daft-lakesoul` skill。RayJob 的配置与排障规则读取 `ray-job` skill；当前 MCP `submit_approval` 尚未支持 `sql_engine: 3`，不能用它提交 RayJob。
+LakeSoul Daft 读写规则读取 `daft-lakesoul` skill。创建或配置 `sql_engine: 3` 的 RayJob 时必须读取 `ray-job` skill。
 
 ## 引擎选择
 
@@ -34,6 +38,7 @@ LakeSoul Daft 读写规则读取 `daft-lakesoul` skill。RayJob 的配置与排�
 | 实时流处理、CDC 同步、低延迟计算       | Flink  | 0          | `stream` 或 `batch`        |
 | 离线批量计算、数仓 ETL、大规模数据处理 | Spark  | 1          | 固定为 `batch`（不支持流） |
 | 自定义 Python 脚本、机器学习、数据处理 | Python | 2          | 固定为 `batch`（不支持流） |
+| Ray/Daft 分布式 Python 批处理          | Ray    | 3          | 固定为 `batch`（不支持流） |
 
 > **提示**：用户没有明确说明时，默认推荐 Flink（流处理场景更通用）。
 
@@ -213,6 +218,17 @@ Spark 固定为 `job_type: batch`，不支持流处理。
 ```
 
 提示：job_type 固定为 batch。`archives_package` 填包名或包 ID，需要先通过 `upload_package` 上传。如果使用 `.ipynb` 文件，系统会自动提取 code cell 内容作为执行代码。
+
+---
+
+## Ray 任务（sql_engine: 3）
+
+RayJob 固定为批任务。创建前必须读取 [`ray-job`](../ray-job/SKILL.md)，由该 Skill 提供完整资源字段、RayJob 白名单配置、多文件工作目录打包和排障规则。
+
+- 单文件任务直接把入口源码填入 `sql_details`，`aiTask.app_info.sql_info.runtime_env_package` 可留空。
+- 多文件任务先以 `type: 7` 上传 ZIP，再把包名或 ID 填入 `aiTask.app_info.sql_info.runtime_env_package`。
+- `driver_memory` 是 Ray Head Pod 内存，建议至少从 `4G` 起；不能照搬普通 Python 任务的 `2G` 默认值。
+- 用户的 `ray_runtime_env_config` 不得设置 `working_dir`，该字段由平台生成。
 
 ---
 

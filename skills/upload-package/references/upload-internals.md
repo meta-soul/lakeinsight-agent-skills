@@ -5,7 +5,7 @@
 ## 分片上传流程
 
 ```
-getUploadID
+initUpload
     ↓
 文件切片（每片 3MB）
     ↓
@@ -28,16 +28,16 @@ uploadPackageMeta（注册元数据）
 
 | 步骤        | 端点                                  | 说明                                                     |
 | ----------- | ------------------------------------- | -------------------------------------------------------- |
-| 获取上传 ID | POST /resourceManager/getUploadID     | 参数：file_name, file_type                               |
+| 初始化上传  | POST /resourceManager/initUpload      | 参数：file_name, file_type                               |
 | 上传分片    | POST /resourceManager/multipartUpload | 参数：file, file_type, file_name, part_number, upload_id |
-| 完成上传    | completeUpload                        | 参数：parts[], file_name, file_type, upload_id           |
+| 完成上传    | POST /resourceManager/completeUpload  | 参数：parts[], file_name, file_type, upload_id           |
 | 注册元数据  | POST /resourceManager/create          | 参数：name, type, resource_info, description             |
 
 ## 错误处理
 
 分片上传失败时（code !== 10039），TaskQueue 会立即 reject，
 整个上传任务终止，不会继续上传剩余分片。
-重新上传时系统会重新获取 uploadID，从第一片开始重传。
+重新上传时系统会重新初始化 uploadID，从第一片开始重传。
 
 ## TaskQueue 说明
 

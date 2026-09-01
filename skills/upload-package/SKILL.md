@@ -8,28 +8,32 @@ keywords:
   - 程序包
   - Python包
   - JAR
+  - Ray
+  - working_dir
+  - Ray 工作目录包
   - 依赖
   - archives_package
+  - runtime_env_package
 mcp_required:
   - lakeinsight-mcp
 description: |
-  上传程序包文件到 LakeInsight 平台，支持 Python 环境包、JAR 包等类型。
-  上传完成后自动注册包元数据，供数据开发任务通过 archives_package 字段引用。
+  上传程序包文件到 LakeInsight 平台，支持 Python 环境包、JAR 包和 Ray 工作目录包。
+  上传完成后自动注册包元数据；Python 任务通过 archives_package 引用，RayJob 通过 runtime_env_package 引用。
   当用户说"上传包"、"上传文件"、"上传 Python 环境"、"上传 JAR"、
-  "传程序包"、"添加依赖包"、"上传依赖"时触发。
-  Keywords: upload, package, 上传, 程序包, Python包, JAR, 依赖, archives_package
+  "上传 Ray 工作目录包"、"传程序包"、"添加依赖包"、"上传依赖"时触发。
+  Keywords: upload, package, 上传, 程序包, Python包, JAR, Ray, working_dir, 依赖, archives_package, runtime_env_package
 ---
 
 # LakeInsight 程序包上传
 
 ## 使用场景
 
-Python 任务需要自定义依赖（如 scikit-learn、pandas 特定版本），
-或 Flink/Spark 任务需要自定义 JAR 时，先上传程序包，再创建任务引用。
+Python 任务需要自定义依赖（如 scikit-learn、pandas 特定版本）、
+Flink/Spark 任务需要自定义 JAR，或 RayJob 需要多文件工作目录时，先上传程序包，再创建任务引用。
 
 ```
-第一步：upload_package 上传包 → 获得包名
-第二步：submit_approval 创建任务 → archives_package 填包名
+第一步：upload_package 上传包 → 获得包名或 ID
+第二步：submit_approval 创建任务 → Python 填 aiTask.app_info.sql_info.archives_package，Ray 填 aiTask.app_info.sql_info.runtime_env_package
 ```
 
 ---
@@ -39,7 +43,7 @@ Python 任务需要自定义依赖（如 scikit-learn、pandas 特定版本）�
 | 参数                    | 必填 | 类型          | 说明                                         |
 | ----------------------- | ---- | ------------- | -------------------------------------------- |
 | name                    | ✓    | string        | 包名，平台唯一标识，创建任务时通过此名称引用 |
-| type                    | 否   | number        | 包类型，固定为 6（Python 包），默认 6        |
+| type                    | 否   | number        | 包类型；6=Python Archives，7=Ray Working Directory |
 | resource_info.file_name | ✓    | string        | 上传的文件名，含扩展名，如 env.tar.gz        |
 | description             | 否   | string        | 包描述，建议填写版本和用途                   |
 | fileContent             | ✓    | Buffer/string | 文件内容，Buffer 或 base64 字符串            |
@@ -53,10 +57,10 @@ Python 任务需要自定义依赖（如 scikit-learn、pandas 特定版本）�
 阅读 [references/upload-internals.md](references/upload-internals.md) 了解分片上传细节。
 
 ```
-1. 获取 uploadID    → /resourceManager/getUploadID
+1. 初始化分片上传   → /resourceManager/initUpload
 2. 文件切片         → 每片 3MB
 3. 并发上传分片     → /resourceManager/multipartUpload（5 并发）
-4. 通知合并         → completeUpload
+4. 通知合并         → /resourceManager/completeUpload
 5. 注册元数据       → /resourceManager/create
 ```
 
@@ -69,6 +73,22 @@ Python 任务需要自定义依赖（如 scikit-learn、pandas 特定版本）�
 ---
 
 ## 典型场景
+
+### 场景 0：上传 Ray 工作目录包
+
+Ray 多文件任务上传 `.zip`，类型必须为 7：
+
+```json
+{
+  "name": "ray-multifile",
+  "type": 7,
+  "resource_info": { "file_name": "ray-multifile.zip" },
+  "description": "Ray working_dir modules",
+  "fileContent": "<base64>"
+}
+```
+
+创建 RayJob 时，在 `submit_approval` 的 `aiTask.app_info.sql_info.runtime_env_package` 中填写 `ray-multifile`。
 
 ### 场景 A：上传 Python 环境包
 
@@ -100,7 +120,7 @@ Python 任务需要自定义依赖（如 scikit-learn、pandas 特定版本）�
 ```json
 {
   "name": "custom-udf",
-  "type": 6,
+  "type": 1,
   "resource_info": { "file_name": "udf-1.0.jar" },
   "description": "自定义 UDF 函数库 v1.0",
   "fileContent": "<Buffer 或 base64>"
@@ -117,3 +137,4 @@ Python 任务需要自定义依赖（如 scikit-learn、pandas 特定版本）�
 | 分片上传失败（code !== 10039） | 网络超时或文件损坏                    | 重新上传                         |
 | 包名已存在                     | 包名重复                              | 换一个包名，或先在平台删除已有包 |
 | Python 任务找不到包            | archives_package 与上传时 name 不一致 | 确认 name 字段拼写完全一致       |
+| RayJob 找不到工作目录包        | 类型不是 7，或 runtime_env_package 不匹配 | 以类型 7 上传 ZIP，并核对包名或 ID |
