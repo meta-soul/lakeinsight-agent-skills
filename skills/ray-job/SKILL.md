@@ -1,8 +1,18 @@
 ---
 name: ray-job
+version: 1.0.0
+keywords:
+  - Ray
+  - RayJob
+  - KubeRay
+  - working_dir
+  - runtime_env
+  - Ray 工作目录包
+mcp_required:
+  - lakeinsight-mcp
 description: |
   在 LakeInsight 配置和排查 KubeRay RayJob 时使用。
-  覆盖 sql_engine=3、单文件与多文件 runtime_env 包、RayJob 原生配置、worker 自动扩缩容、Daft Ray runner 与常见部署故障。
+  覆盖 sql_engine=3、单文件与多文件 Ray 工作目录包、RayJob 原生配置、worker 自动扩缩容、Daft Ray runner 与常见部署故障。
 ---
 
 # LakeInsight RayJob
@@ -28,17 +38,47 @@ LakeInsight Ray 数据开发任务使用 `sql_engine: 3`，固定为批任务。
 
 定时调度实例会在任务名称后追加实例 ID 和 `-batch`。
 
-再把它和可选 runtime_env 包合并为一个 ZIP，上传对象存储，并作为 Ray `runtimeEnvYAML.working_dir`。不要在用户 YAML 中设置 `working_dir`，平台会拒绝覆盖。
+再把它和可选的 Ray 工作目录包合并为一个 ZIP，上传对象存储，并作为 Ray `runtimeEnvYAML.working_dir`。不要在用户 YAML 中设置 `working_dir`，平台会拒绝覆盖。
 
 `num_executors` 是 Ray worker 副本数，不是 Spark executor。`executor_*` 对应每个 worker pod；`driver_*` 对应 Ray head pod。
 
 Head 同时承载 Ray GCS、Dashboard、Job Server 和任务 driver 等组件，通常比单个 worker 需要更多内存。`driver_memory` 建议从 `4G` 起配；Daft、大规模元数据或高并发任务可从 `8G` 起，并根据实际使用量调整。若 Head 反复出现退出码 137、`OOMKilled`，或伴随内存不足的 503 探针失败，应优先增大 `driver_memory`，不能只重启 Pod。
 
-当前 `lakeinsight-mcp` 的 `submit_approval` schema 只接受 Flink、Spark 和 Python（`sql_engine` 为 0、1、2）；尚不能通过该 Tool 创建 `sql_engine: 3` 的 RayJob。不要生成一个会被 MCP 参数校验拒绝的 Ray 创建调用；Ray 创建 MCP 支持补齐前，通过 LakeInsight UI 或后端任务接口配置。
+通过 `lakeinsight-mcp` 创建 RayJob 时使用 `submit_approval`，设置 `sql_engine: 3`。如果需要多文件工作目录，先用 `upload_package` 以 `type: 7` 上传 ZIP，再把包名或 ID 填入 `aiTask.app_info.sql_info.runtime_env_package`。
 
-## runtime_env 包
+最小 `submit_approval` Tool 入参如下；Tool 的外层字段必须是 `aiTask`：
 
-runtime_env 包必须是 `.zip`。在 LakeInsight UI 上传时选择 Ray runtime-env 包类型；平台会下载、解压并和自动生成的入口脚本合并。约束是：
+```json
+{
+  "aiTask": {
+    "isNew": true,
+    "name": "ray-demo",
+    "description": "Ray batch demo",
+    "type": 0,
+    "app_info": {
+      "sql_engine": 3,
+      "sql_info": {
+        "node_path": "/jobs/ray_demo.py",
+        "node_label": "ray_demo.py",
+        "sql_details": "import ray\nray.init(address='auto')\nprint(ray.cluster_resources(), flush=True)\n",
+        "job_type": "batch",
+        "worker_autoscaling": false,
+        "num_executors": 1,
+        "worker_max_replicas": 1,
+        "executor_cores": 1,
+        "executor_memory": [2, "G"],
+        "driver_cores": 1,
+        "driver_memory": [4, "G"],
+        "params": ""
+      }
+    }
+  }
+}
+```
+
+## Ray 工作目录包
+
+Ray 工作目录包（后端类型 7，`Ray Working Directory`）必须是 `.zip`。可以在 LakeInsight UI 上传，也可以调用 MCP `upload_package`；平台会下载、解压并和自动生成的入口脚本合并。约束是：
 
 - ZIP 内不能包含平台将生成的 `<job-name>.py`，否则入口文件冲突；
 - 不要上传密钥、kubeconfig、虚拟环境缓存或不必要的二进制产物；
@@ -46,11 +86,11 @@ runtime_env 包必须是 `.zip`。在 LakeInsight UI 上传时选择 Ray runtime
 
 `ray_runtime_env_config` 是 YAML。`excludes` 使用 gitwildmatch 模式并在重新打包前应用，不能排除平台入口文件；其余字段进入 Ray `runtimeEnvYAML`。
 
-多 Python 文件任务实际执行的代码来自任务编辑器中的 `sql_details`。用户本地项目可以包含 `entrypoint.py`，但新建任务时前端默认用所选文件名生成任务名称，后端又用任务名称生成运行入口；因此默认不要把 `entrypoint.py` 压入 runtime_env ZIP，只压入口依赖的模块和资源。需要生成或检查这种包时，读取[多文件 runtime_env 示例](references/multifile-runtime-env.md)，并优先复用其中的完整样例文件。
+多 Python 文件任务实际执行的代码来自任务编辑器中的 `sql_details`。用户本地项目可以包含 `entrypoint.py`，但新建任务时前端默认用所选文件名生成任务名称，后端又用任务名称生成运行入口；因此默认不要把 `entrypoint.py` 压入工作目录 ZIP，只压入口依赖的模块和资源。需要生成或检查这种包时，读取[多文件工作目录示例](references/multifile-runtime-env.md)，并优先复用其中的完整样例文件。
 
 若 `ray_runtime_env_config` 使用 `pip` 或 `uv` 安装额外依赖，Head 和 Worker 必须能访问对应包索引；完全隔离网络时使用预装依赖的 runtime 镜像。具体 YAML 见多文件示例。
 
-当前 `lakeinsight-mcp` 的 `upload_package` 只接受类型 0–6，不能上传 Ray runtime-env 的后端类型 7；不要把普通 Python Archives 当作 Ray runtime-env 包。
+不要把普通 Python Archives（类型 6）当作 Ray 工作目录包；Ray `runtime_env_package` 只解析类型 7。
 
 ## Worker 自动扩缩容
 
@@ -102,6 +142,8 @@ ray.get([work.remote(index) for index in range(10)])
 | `ttlSecondsAfterFinished` | 整数 | 任务结束后保留 RayJob 的时间 |
 | `shutdownAfterJobFinishes` | 布尔值 | Job 结束后是否关闭 RayCluster |
 | `submitterConfig.backoffLimit` | 整数 | submitter Kubernetes Job 的重试次数 |
+
+字段名区分大小写，必须使用表中的 camelCase 名称。KubeRay 不允许在 `shutdownAfterJobFinishes: false` 时同时设置 `ttlSecondsAfterFinished`；如果需要保留 RayCluster，必须完全省略 TTL 字段。TTL 只能与 `shutdownAfterJobFinishes: true` 一起使用。
 
 推荐使用 YAML mapping：
 
