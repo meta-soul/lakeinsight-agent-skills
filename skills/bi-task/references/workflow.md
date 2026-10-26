@@ -20,7 +20,7 @@
 
 ## 第二步：数据探测与结构画像
 
-用 Lakesoul-Mcp 查 `get_datasource_schemas` → `get_datasource_tables` → `get_datasource_fields`，**重试最多 5 次，仍查不到就告知用户并停止，不生成代码**。Token 已内置，无需用户提供。
+用 Lakesoul-Mcp 查 `get_datasource_schemas` → `get_datasource_tables` → `get_datasource_fields`，**重试最多 5 次，仍查不到就告知用户并停止，不生成代码**。Lakesoul-MCP 的鉴权 Token 已内置，无需用户提供。
 
 ### 结构画像
 
