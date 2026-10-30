@@ -1,10 +1,10 @@
-# 多 Python 文件 runtime_env 示例
+# 多 Python 文件 Ray 工作目录示例
 
 本例验证 LakeInsight 将任务入口与用户上传的 Python 包合并后，KubeRay 能从多个模块读取 LakeSoul 数据。
 
 任务编辑器中的 `sql_details` 是实际执行代码。新建任务时，VS Code 前端默认去掉所选文件的 `.py` 后缀，并把结果作为任务名称；后端再把任务内容保存为 `<任务名称>.py`。因此选择 `entrypoint.py` 时，默认任务名称是 `entrypoint`，后端生成的运行入口也是 `entrypoint.py`。
 
-如果上传 ZIP 里同时包含根目录 `entrypoint.py`，后端合并时会发现同名文件并拒绝提交。最稳妥的做法是：本地项目保留 `entrypoint.py`，但 runtime_env ZIP 只包含它导入的模块和资源。
+如果上传 ZIP 里同时包含根目录 `entrypoint.py`，后端合并时会发现同名文件并拒绝提交。最稳妥的做法是：本地项目保留 `entrypoint.py`，但 Ray 工作目录 ZIP 只包含它导入的模块和资源。
 
 ## 可复用样例
 
@@ -51,9 +51,9 @@ utils/output.py
 
 ## 创建任务
 
-1. 把 `ray-runtime-multifile.zip` 上传为 Ray runtime-env 包。
+1. 调用 `upload_package`，以 `type: 7` 把 `ray-runtime-multifile.zip` 上传为 Ray 工作目录包。
 2. 新建 `sql_engine: 3` 的批任务，把 `entrypoint.py` 内容作为任务内容。
-3. 将上传结果的真实 ID 写入 `runtime_env_package.id`。
+3. 在 `submit_approval` 的 `aiTask.app_info.sql_info.runtime_env_package` 中填写包名或 ID，例如 `"ray-multifile"`。使用 UI 时直接选择该工作目录包。
 4. 可在任务参数中填写：
 
 ```text
@@ -62,7 +62,7 @@ utils/output.py
 
 5. 首次验证使用固定 Worker；读取成功后再单独测试自动扩缩容。
 
-在 UI 中选择上传得到的 runtime-env 包、填入上述参数，并用 `excludes` 排除 `__pycache__` 与 `.pyc`。成功日志会包含表名、Daft schema 和 `rows` 字典。
+在 UI 中选择上传得到的 Ray 工作目录包、填入上述参数，并用 `excludes` 排除 `__pycache__` 与 `.pyc`。成功日志会包含表名、Daft schema 和 `rows` 字典。
 
 ## 添加第三方依赖
 

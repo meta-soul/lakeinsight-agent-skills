@@ -24,9 +24,11 @@ LakeInsight Agent Skills — 面向 LakeInsight / LakeSoul 数据平台的 agent
 ├── skills/             # agent 技能本体（AI 能力，每个含 SKILL.md + references/）
 │   ├── bi-task/        #    BI 数据看板生成技能
 │   ├── create-task/    #    数据开发任务创建技能
+│   ├── daft-lakesoul/ #    Daft 读写 LakeSoul 技能
 │   ├── jar-task/       #    JAR 程序包任务技能
 │   ├── openmetadata-glossary-automation/ # OpenMetadata 术语自动治理技能
 │   ├── openmetadata-metrics/             # OpenMetadata 指标治理技能
+│   ├── ray-job/        #    KubeRay RayJob 创建与排障技能
 │   └── upload-package/ #    程序包上传技能
 ├── manifest.yaml       # skill 注册表（纯元数据，无安装状态）
 └── README.md
@@ -127,8 +129,10 @@ dependencies:
 | 技能 | 版本 | 用途 |
 | ---- | ---- | ---- |
 | `bi-task` | 1.0.0 | 生成数据看板 / 报表 / 大屏 / 可视化图表（BI 面板） |
-| `create-task` | 1.0.0 | 创建 / 更新 LakeInsight 数据开发任务（Flink / Spark / Python） |
+| `create-task` | 1.0.0 | 创建 / 更新 LakeInsight 数据开发任务（Flink / Spark / Python / Ray） |
+| `daft-lakesoul` | 1.0.0 | 使用 Daft 读写 LakeSoul，并处理 Ray runner、分区和小文件问题 |
 | `jar-task` | 1.0.0 | 创建 Flink / Spark 程序包任务（JAR 任务） |
 | `openmetadata-glossary-automation` | 1.0.0 | 生成 / 去重 OpenMetadata 业务术语，并关联到对应的表和字段 |
 | `openmetadata-metrics` | 1.0.0 | 创建 / 核验 OpenMetadata 业务指标定义及来源表血缘 |
-| `upload-package` | 1.0.0 | 上传程序包文件到 LakeInsight 平台 |
+| `ray-job` | 1.0.0 | 创建、配置和排查 LakeInsight KubeRay RayJob |
+| `upload-package` | 1.0.0 | 上传 Python Archives、JAR 和 Ray 工作目录包 |

@@ -18,19 +18,21 @@ skills:
     - lakeinsight-mcp
   create-task:
     version: 1.0.0
-    description: '创建或更新 LakeInsight 数据开发任务，支持 Flink、Spark、Python 三种引擎。
+    description: '创建或更新 LakeInsight 数据开发任务，支持 Flink、Spark、Python 和 Ray 四种引擎。
 
       覆盖任务创建、配置更新、版本管理全流程。
 
-      当用户说"创建任务"、"新建 Flink 任务"、"写个 Spark 批处理"、"跑 Python 脚本"、
+      当用户说"创建任务"、"新建 Flink 任务"、"写个 Spark 批处理"、"跑 Python 脚本"、"创建 RayJob"、
 
       "更新任务"、"修改任务配置"、"发布新版本"时触发。
 
-      Keywords: Flink, Spark, Python, 任务, submit_approval, dataDev, 流任务, 批任务, sql_engine'
+      Keywords: Flink, Spark, Python, Ray, RayJob, 任务, submit_approval, dataDev, 流任务, 批任务, sql_engine'
     keywords:
     - Flink
     - Spark
     - Python
+    - Ray
+    - RayJob
     - 任务
     - submit_approval
     - dataDev
@@ -39,6 +41,8 @@ skills:
     - sql_engine
     mcp_required:
     - lakeinsight-mcp
+    dependencies:
+      ray-job: '>=1.0.0'
   daft-lakesoul:
     version: 1.0.0
     description: '使用 Daft 读取、过滤、写入 LakeSoul 表，或排查 Daft/LakeSoul/Ray runner 集成问题时使用。覆盖 scan.to_daft、谓词下推、write_daft、分区与小文件。'
@@ -68,26 +72,29 @@ skills:
     - lakeinsight-mcp
   ray-job:
     version: 1.0.0
-    description: '在 LakeInsight 配置和排查 KubeRay RayJob 时使用。覆盖 sql_engine=3、单文件与多文件 runtime_env 包、RayJob 原生配置、worker 自动扩缩容和 Daft Ray runner。'
+    description: '在 LakeInsight 配置和排查 KubeRay RayJob 时使用。
+
+      覆盖 sql_engine=3、单文件与多文件 Ray 工作目录包、RayJob 原生配置、worker 自动扩缩容、Daft Ray runner 与常见部署故障。'
     keywords:
     - Ray
     - RayJob
     - KubeRay
+    - working_dir
     - runtime_env
-    - 多文件 Python
-    - Ray 自动扩缩容
-    - Daft Ray
+    - Ray 工作目录包
+    mcp_required:
+    - lakeinsight-mcp
   upload-package:
     version: 1.0.0
-    description: '上传程序包文件到 LakeInsight 平台，支持 Python 环境包、JAR 包等类型。
+    description: '上传程序包文件到 LakeInsight 平台，支持 Python 环境包、JAR 包和 Ray 工作目录包。
 
-      上传完成后自动注册包元数据，供数据开发任务通过 archives_package 字段引用。
+      上传完成后自动注册包元数据；Python 任务通过 archives_package 引用，RayJob 通过 runtime_env_package 引用。
 
       当用户说"上传包"、"上传文件"、"上传 Python 环境"、"上传 JAR"、
 
-      "传程序包"、"添加依赖包"、"上传依赖"时触发。
+      "上传 Ray 工作目录包"、"传程序包"、"添加依赖包"、"上传依赖"时触发。
 
-      Keywords: upload, package, 上传, 程序包, Python包, JAR, 依赖, archives_package'
+      Keywords: upload, package, 上传, 程序包, Python包, JAR, Ray, working_dir, 依赖, archives_package, runtime_env_package'
     keywords:
     - upload
     - package
@@ -95,7 +102,11 @@ skills:
     - 程序包
     - Python包
     - JAR
+    - Ray
+    - working_dir
+    - Ray 工作目录包
     - 依赖
     - archives_package
+    - runtime_env_package
     mcp_required:
     - lakeinsight-mcp
