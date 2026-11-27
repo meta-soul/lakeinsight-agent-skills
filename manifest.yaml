@@ -110,3 +110,22 @@ skills:
     - runtime_env_package
     mcp_required:
     - lakeinsight-mcp
+  ds-schedule:
+    version: 1.0.0
+    description: '使用 LakeInsight 的 ds_* 工具操作 DolphinScheduler：查询工作空间和项目、
+      管理工作流和定时、运行和补数、暂停/恢复/停止实例、查看任务实例。
+      当用户说“建一个调度工作流”“每天 2 点跑”“补一下昨天数据”“停掉这个实例”时触发。
+      Keywords: DolphinScheduler, DS, 调度, 工作流, 定时任务, cron, 补数, 实例'
+    keywords:
+    - DolphinScheduler
+    - DS
+    - 调度
+    - 工作流
+    - 定时任务
+    - 补数
+    - 任务实例
+    - ds_create_workflow
+    - ds_create_schedule
+    - ds_run_workflow
+    mcp_required:
+    - lakeinsight-mcp
