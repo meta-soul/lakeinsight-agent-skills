@@ -24,6 +24,7 @@ LakeInsight Agent Skills — 面向 LakeInsight / LakeSoul 数据平台的 agent
 ├── skills/             # agent 技能本体（AI 能力，每个含 SKILL.md + references/）
 │   ├── bi-task/        #    BI 数据看板生成技能
 │   ├── create-task/    #    数据开发任务创建技能
+│   ├── ds-schedule/    #    DolphinScheduler 工作流/定时/补数技能
 │   ├── daft-lakesoul/ #    Daft 读写 LakeSoul 技能
 │   ├── jar-task/       #    JAR 程序包任务技能
 │   ├── openmetadata-glossary-automation/ # OpenMetadata 术语自动治理技能
